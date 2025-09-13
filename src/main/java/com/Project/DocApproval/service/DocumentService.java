@@ -1,5 +1,6 @@
 package com.Project.DocApproval.service;
 
+import com.Project.DocApproval.exceptions.FileStorageException;
 import com.Project.DocApproval.exceptions.MyFileNotFoundException;
 import com.Project.DocApproval.model.Document;
 import com.Project.DocApproval.repository.DocumentRepository;
@@ -21,16 +22,17 @@ public class DocumentService {
     private DocumentRepository documentRepository;
 
     public void saveFileInDatabase(MultipartFile multipartFile) throws IOException {
-        Document doc = new Document(multipartFile.getOriginalFilename(),
-                multipartFile.getContentType(),
-                multipartFile.getBytes());
+        try {
+            Document doc = new Document(multipartFile.getOriginalFilename(),
+                    multipartFile.getContentType(),
+                    multipartFile.getBytes());
 
-        documentRepository.save(doc);
+            documentRepository.save(doc);
+        } catch (IOException e) {
+            throw new FileStorageException("Failed To upload",e);
+        }
     }
 
-    public List<Document> getAllDocuments(){
-        return documentRepository.findAll();
-    }
     public void deleteFile(Long id){
         try {
             documentRepository.deleteById(id);
@@ -40,5 +42,10 @@ public class DocumentService {
     }
     public Document getFile(Long id){
         return documentRepository.findById(id).orElseThrow(()->new RuntimeException("Not Found"));
+    }
+
+
+    public List<Document> getAllDocuments(){
+        return documentRepository.findAll();
     }
 }
