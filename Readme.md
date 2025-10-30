@@ -21,18 +21,20 @@ A multi-step document approval system built with Spring Boot, PostgreSQL, JWT, a
 ## Installation
 
 1. Clone the repository:
+```
 - git clone https://github.com/Nimish2098/DocApproval.git
 - cd DocApproval
-
+```
 
 
 2. Configure PostgreSQL:
 - Create a database and update `application.properties` with credentials.
 
 3. Build and run the backend:
+ ```
 - mvn clean install
 - mvn spring-boot:run
-
+```
 4. Access APIs and WebSocket endpoints as per documentation.
 
 ## Future Improvements
@@ -41,3 +43,4 @@ A multi-step document approval system built with Spring Boot, PostgreSQL, JWT, a
 - Role-based dashboard with analytics
 - Integration with email and Slack for notifications
 - Frontend UI with React or Angular
+
