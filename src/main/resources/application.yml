@@ -1,0 +1,33 @@
+spring:
+  profile:
+    active: dev
+---
+spring:
+  config:
+    active:
+     on-profile: dev
+  datasource:
+    url: jdbc:mysql://localhost:3306/document_db
+    username: root
+    password: Ni@12345
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+    ddl-auto: update
+    show-sql: true
+
+server:
+  port: 8080
+---
+  spring:
+    config:
+      active:
+        on-profile: prod
+
+---
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorted: method

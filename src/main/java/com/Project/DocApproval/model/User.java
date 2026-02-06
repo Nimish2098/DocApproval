@@ -1,31 +1,24 @@
 package com.Project.DocApproval.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import lombok.*;
+import com.Project.DocApproval.enums.Role;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.util.List;
-
-@Data
 @Entity
+@Table(name="users")
 @Getter
 @Setter
 public class User {
 
-    @Id
-    private Long employeeId;
-    private String name;
+        @Id
+        private Long id;
 
-    private String email;
+        private String username;
+        private String email;
+        private String password;
 
-    private String Approval;
+        @Enumerated(EnumType.STRING)
+        private Role role;
 
-    private String roles;
-
-
-    public User(Long employeeId, String name, String roles) {
-        this.employeeId = employeeId;
-        this.name = name;
-        this.roles = roles;
-    }
 }
