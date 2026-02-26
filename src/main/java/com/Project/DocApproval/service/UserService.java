@@ -1,5 +1,6 @@
 package com.Project.DocApproval.service;
 
+import com.Project.DocApproval.dto.user.RegisterRequestDTO;
 import com.Project.DocApproval.enums.Role;
 import com.Project.DocApproval.model.User;
 import com.Project.DocApproval.repository.UserRepository;
@@ -7,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.config.ConfigDataResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -15,7 +17,12 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    public User addUser(User user){
+    public User addUser(RegisterRequestDTO request){
+        User user = User.builder().
+                username(request.username())
+                .email(request.email())
+                .password(request.password())
+                .role(request.role()).build();
         return userRepository.save(user);
     }
 
@@ -53,4 +60,8 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
+
+    public List<User> getAllUsers(){
+        return userRepository.findAll();
+    }
 }

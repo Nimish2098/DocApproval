@@ -13,7 +13,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class DecisionController {
 
-    private DecisionService decisionService;
+    private final DecisionService decisionService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

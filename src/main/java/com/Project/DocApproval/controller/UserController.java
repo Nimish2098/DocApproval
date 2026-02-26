@@ -1,23 +1,26 @@
 package com.Project.DocApproval.controller;
 
+import com.Project.DocApproval.dto.user.RegisterRequestDTO;
 import com.Project.DocApproval.model.User;
 import com.Project.DocApproval.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/user")
 @RequiredArgsConstructor
 public class UserController {
-    private UserService userService;
+
+    private final UserService userService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public User createUser(@RequestBody User user){
-        return userService.addUser(user);
+    public User createUser(@RequestBody RegisterRequestDTO request){
+        return userService.addUser(request);
     }
 
     @PostMapping("/{id}")
@@ -38,4 +41,9 @@ public class UserController {
     }
 
 
+    @GetMapping
+    @ResponseStatus(HttpStatus.FOUND)
+    public List<User> getAllUsers(){
+        return userService.getAllUsers();
+    }
 }

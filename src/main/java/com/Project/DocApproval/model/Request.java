@@ -25,7 +25,7 @@ public class Request {
     @Enumerated(EnumType.STRING)
     private RequestStatus status;
 
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "json")
     private String payload;
 
     @ManyToOne

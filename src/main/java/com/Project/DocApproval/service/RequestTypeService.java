@@ -25,7 +25,7 @@ public class RequestTypeService {
         RequestType existingRequestType = repository.getRequestTypeById(id);
 
         existingRequestType.setName(requestType.getName());
-        existingRequestType.setSchema(requestType.getSchema());
+        existingRequestType.setRequest_schemas(requestType.getRequest_schemas());
 
         return repository.save(existingRequestType);
     }
@@ -37,7 +37,7 @@ public class RequestTypeService {
         {
             switch (key){
                 case "name" : existingRequestType.setName((String)value); break;
-                case "schema" : existingRequestType.setSchema((String)value); break;
+                case "schema" : existingRequestType.setRequest_schemas((String)value); break;
             }
         });
 

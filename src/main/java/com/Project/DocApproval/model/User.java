@@ -2,6 +2,7 @@ package com.Project.DocApproval.model;
 
 import com.Project.DocApproval.enums.Role;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,9 +10,11 @@ import lombok.Setter;
 @Table(name="users")
 @Getter
 @Setter
+@Builder
 public class User {
 
         @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
 
         private String username;

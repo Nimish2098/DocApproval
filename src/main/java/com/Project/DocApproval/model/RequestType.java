@@ -16,6 +16,6 @@ public class RequestType {
     private Long id;
 
     private String name;
-    private String schema;
+    private String request_schemas;
 
 }
