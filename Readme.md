@@ -116,6 +116,9 @@ Contributions are welcome! Please follow these steps:
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Contact
+# 🚩 Brutally Honest ATS - AI Resume Critic
 
-For any queries or support, please contact the development team.
+> [!IMPORTANT]
+> **🚧 Project Status: Under Development**
+> This project is currently in the active development phase.
+> **Current Progress:** Phase 1 (Core Backend & State Machine) is Complete. Phase 2 (AI Critique Engine) is in progress.
