@@ -1,6 +1,5 @@
 package com.Project.DocApproval.controller;
 
-import com.Project.DocApproval.dto.user.RegisterRequestDTO;
 import com.Project.DocApproval.model.User;
 import com.Project.DocApproval.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +18,7 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public User createUser(@RequestBody RegisterRequestDTO request){
+    public User createUser(@RequestBody User request){
         return userService.addUser(request);
     }
 

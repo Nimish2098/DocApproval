@@ -31,6 +31,6 @@ public class Decision {
 
     private String comment;
 
-    private LocalDateTime decidedAt;
+    private LocalDateTime decisionAt;
 }
 

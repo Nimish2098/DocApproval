@@ -3,7 +3,7 @@ package com.Project.DocApproval.enums;
 public enum RequestStatus {
     DRAFT,
     CANCELLED,
-    APPROVED,
+    ACCEPTED,
     PENDING,
     REJECTED
 }

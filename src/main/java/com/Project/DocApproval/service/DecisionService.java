@@ -34,7 +34,7 @@ public class DecisionService {
         existingDecision.setReviewer(decision.getReviewer());
         existingDecision.setRequest(decision.getRequest());
         existingDecision.setComment(decision.getComment());
-        existingDecision.setDecidedAt(decision.getDecidedAt());
+        existingDecision.setDecisionAt(decision.getDecisionAt());
 
         return decisionRepository.save(existingDecision);
     }
@@ -49,7 +49,7 @@ public class DecisionService {
                 case "reviewer": existingDecision.setReviewer((User)value); break;
                 case "decision": existingDecision.setDecision((DecisionType) value); break;
                 case "comment" : existingDecision.setComment((String) value); break;
-                case "decidedAt":existingDecision.setDecidedAt((LocalDateTime) value);
+                case "decidedAt":existingDecision.setDecisionAt((LocalDateTime) value);
 
 
             }

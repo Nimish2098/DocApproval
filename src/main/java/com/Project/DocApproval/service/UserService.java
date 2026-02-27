@@ -1,6 +1,5 @@
 package com.Project.DocApproval.service;
 
-import com.Project.DocApproval.dto.user.RegisterRequestDTO;
 import com.Project.DocApproval.enums.Role;
 import com.Project.DocApproval.model.User;
 import com.Project.DocApproval.repository.UserRepository;
@@ -17,12 +16,7 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    public User addUser(RegisterRequestDTO request){
-        User user = User.builder().
-                username(request.username())
-                .email(request.email())
-                .password(request.password())
-                .role(request.role()).build();
+    public User addUser(User user){
         return userRepository.save(user);
     }
 
