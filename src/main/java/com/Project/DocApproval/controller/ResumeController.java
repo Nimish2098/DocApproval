@@ -35,6 +35,7 @@ public class ResumeController {
         UUID trackingId = null;
         try {
             trackingId = resumeService.initiateAnalysis(name, email, file, jobDescription);
+            resumeService.processResume(trackingId);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
