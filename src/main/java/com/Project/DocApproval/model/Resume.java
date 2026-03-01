@@ -23,9 +23,6 @@ public class Resume {
     private String email;
     private String filePath;
 
-    @Column(columnDefinition = "TEXT")
-    private String targetJobDescription;
-
     @Enumerated(EnumType.STRING)
     private ApplicationStatus status;
 
@@ -37,4 +34,12 @@ public class Resume {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "missing_skills", columnDefinition = "jsonb")
     private List<String> missingSkills;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "candidate_id", nullable = false)
+    private User candidate; // The job seeker
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "job_description_id", nullable = false)
+    private JobDescription jobDescription;
 }

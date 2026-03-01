@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Entity
 @Table(name="app_users")
 @Getter
@@ -18,9 +20,12 @@ public class User {
 
         private String username;
         private String email;
-        private String password;
 
-        @Enumerated(EnumType.STRING)
-        private Role role;
+        @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
+        private List<JobDescription> jobDescriptions;
+
+        // A user can upload many Resumes (Individual role)
+        @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL)
+        private List<Resume> resumes;
 
 }
