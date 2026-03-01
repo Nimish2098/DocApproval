@@ -76,9 +76,9 @@ public class ResumeService {
             AnalysisResult result = analysisService.performAnalysis(text, requiredSkills);
 
             // Update with results
-            resume.setMatchScore(result.matchPercentage());
+            resume.setMatchScore(result.matchScore());
             resume.setMissingSkills(result.missingSkills());
-            resume.setAnalysisFeedback(result.evaluationFeedback());
+            resume.setAnalysisFeedback(result.analysisFeedback());
             resume.setStatus(ApplicationStatus.COMPLETED);
 
             resumeRepository.save(resume);

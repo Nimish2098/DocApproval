@@ -3,45 +3,45 @@ package com.Project.DocApproval.service;
 import com.Project.DocApproval.model.AnalysisResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class AnalysisService {
 
-    private final NlpService nlpservice;
+    // Note: This takes the STRING extracted by Tika, not a file path
+    public AnalysisResult performAnalysis(String extractedResumeText, Set<String> requiredSkills) {
 
-    public AnalysisResult performAnalysis(String resumeText, String jdText) {
-        String cleanResume = resumeText.toLowerCase();
+        // 1. Convert the extracted text to lowercase for case-insensitive matching
+        String content = extractedResumeText.toLowerCase();
 
-        // 1. Dynamic Rubric Generation
-        Set<String> jdKeywords = extractKeywords(jdText);
+        // 2. Identify missing skills by checking if the text contains the keyword
+        List<String> missingSkills = new ArrayList<>();
+        int matchedCount = 0;
 
-        // 2. Set Subtraction (Finding the Voids)
-        List<String> missingKeywords = jdKeywords.stream()
-                .filter(keyword -> !cleanResume.contains(keyword))
-                .collect(Collectors.toList());
+        for (String skill : requiredSkills) {
+            if (content.contains(skill.toLowerCase())) {
+                matchedCount++;
+            } else {
+                missingSkills.add(skill);
+            }
+        }
 
-        // 3. Score Calculation
-        double score = calculateScore(jdKeywords.size(), missingKeywords.size());
+        // 3. Calculate match percentage
+        double score = 0.0;
+        if (!requiredSkills.isEmpty()) {
+            score = ((double) matchedCount / requiredSkills.size()) * 100;
+        }
 
-        return new AnalysisResult(score, missingKeywords);
+        // 4. Generate the feedback string
+        String feedback = generateFeedback(score, missingSkills);
+
+        return new AnalysisResult(score, missingSkills, feedback);
     }
 
-    public Set<String> extractKeywords(String text) {
-        // Only keep words tagged as NN (Noun) or NNP (Proper Noun)
-        // This automatically ignores "where", "into", "highly", etc.
-        return nlpservice.extractTechnicalNouns(text);
-    }
-    private boolean isStopWord(String word) {
-        return List.of("this", "that", "with", "from", "your", "must", "have").contains(word);
-    }
-
-    private double calculateScore(int total, int missing) {
-        if (total == 0) return 0.0;
-        return ((double) (total - missing) / total) * 100;
+    private String generateFeedback(double score, List<String> missing) {
+        if (score < 40) return "Profile Mismatch. Missing: " + String.join(", ", missing);
+        if (score < 80) return "Partial Match. Consider learning: " + String.join(", ", missing);
+        return "Strong Match. Your profile aligns well.";
     }
 }
