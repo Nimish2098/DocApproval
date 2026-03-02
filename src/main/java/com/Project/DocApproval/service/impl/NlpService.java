@@ -1,4 +1,4 @@
-package com.Project.DocApproval.service;
+package com.Project.DocApproval.service.impl;
 
 import opennlp.tools.postag.POSModel;
 import opennlp.tools.postag.POSTaggerME;

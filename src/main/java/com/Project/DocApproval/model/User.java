@@ -1,34 +1,30 @@
 package com.Project.DocApproval.model;
 
 import com.Project.DocApproval.enums.Role;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
-import java.util.List;
-import java.util.UUID;
 
 @Entity
-@Table(name="app_users")
-@Getter
-@Setter
-public class User {
+@Table(name = "users")
+@Data
+@NoArgsConstructor
+public class User{  // ← implement UserDetails
 
         @Id
-        @GeneratedValue(strategy = GenerationType.UUID)
-        private UUID id;
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private Long id;
 
-        private String username;
+        @Column(unique = true, nullable = false)
         private String email;
 
-        @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
-        @JsonManagedReference // This side will be included in the JSON
-        private List<JobDescription> jobDescriptions;
+        @Column(nullable = false)
+        private String password;  // ← must be BCrypt-hashed
 
-        // A user can upload many Resumes (Individual role)
-        @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL)
-        private List<Resume> resumes;
+        private String username;
+
+        @Enumerated(EnumType.STRING)
+        private Role role = Role.USER;
+
 
 }

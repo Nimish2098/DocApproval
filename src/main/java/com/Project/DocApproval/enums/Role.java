@@ -1,8 +1,8 @@
 package com.Project.DocApproval.enums;
 
-public enum Role {
+    public enum Role {
 
-    ADMIN,
-    REQUESTER,
-    REVIEWER    
-}
+        USER,
+        ADMIN
+
+    }

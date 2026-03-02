@@ -1,0 +1,116 @@
+package com.Project.DocApproval.service.impl;
+
+import com.Project.DocApproval.enums.ApplicationStatus;
+import com.Project.DocApproval.exceptions.DuplicateApplicationException;
+import com.Project.DocApproval.exceptions.ResourceNotFoundException;
+import com.Project.DocApproval.model.AnalysisResult;
+import com.Project.DocApproval.model.Resume;
+import com.Project.DocApproval.model.ResumeStatusHistory;
+import com.Project.DocApproval.repository.ResumeRepository;
+import com.Project.DocApproval.repository.StatusHistoryRepository;
+import com.Project.DocApproval.service.AnalysisService;
+import com.Project.DocApproval.service.ResumeService;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.UUID;
+import com.Project.DocApproval.model.*;
+import com.Project.DocApproval.repository.*;
+
+import java.util.Set;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class ResumeServiceImpl implements ResumeService {
+
+    private final ResumeRepository resumeRepository;
+    private final JobDescriptionRepository jdRepository;
+    private final UserRepository userRepository;
+    private final FileStorageService fileStorageService;
+    private final TextExtractionService extractionService;
+    private final AnalysisService analysisService;
+    private final StatusHistoryRepository historyRepository;
+
+    @Transactional
+    @Override
+    public UUID initiateAnalysis(String name, String email, MultipartFile file, UUID jdId, UUID userId) throws IOException {
+
+        if (resumeRepository.existsByEmailAndJobDescriptionId(email, jdId)) {
+            throw new DuplicateApplicationException();
+        }
+        // 1. Fetch parents
+        User user = userRepository.findById(userId).orElseThrow();
+        JobDescription jd = jdRepository.findById(jdId).orElseThrow();
+
+        // 2. Save physical file
+        String path = fileStorageService.save(file, "resumes");
+
+        // 3. Map everything to the Resume entity
+        Resume resume = new Resume();
+        resume.setCandidateName(name);
+        resume.setEmail(email);
+        resume.setFilePath(path);
+        resume.setCandidate(user); // Mapping User
+        resume.setJobDescription(jd); // Mapping JD
+        resume.setStatus(ApplicationStatus.UPLOADED);
+
+        Resume saved = resumeRepository.save(resume);
+        updateStatus(saved, ApplicationStatus.UPLOADED, "Initial upload complete.");
+
+        return saved.getId();
+    }
+
+    @Async
+    @Transactional
+    @Override
+    public void processResume(UUID resumeId) {
+        Resume resume = resumeRepository.findById(resumeId)
+                .orElseThrow(()-> new ResourceNotFoundException("Resume not Found for Processing"+resumeId));
+
+        try {
+            updateStatus(resume, ApplicationStatus.PARSING, "Extracting text.");
+            String text = extractionService.extractText(resume.getFilePath());
+
+            updateStatus(resume, ApplicationStatus.ANALYZING, "Comparing against JD requirements.");
+
+            // Get pre-analyzed keywords from the linked JD
+            Set<String> requiredSkills = resume.getJobDescription().getExtractedKeywords();
+
+            // Run the Analysis
+            AnalysisResult result = analysisService.performAnalysis(text, requiredSkills);
+
+            // Update with results
+            resume.setMatchScore(result.matchScore());
+            resume.setMissingSkills(result.missingSkills());
+            resume.setAnalysisFeedback(result.analysisFeedback());
+            resume.setStatus(ApplicationStatus.COMPLETED);
+
+            resumeRepository.save(resume);
+            updateStatus(resume, ApplicationStatus.COMPLETED, "Analysis successful.");
+
+        } catch (Exception e) {
+            log.error("Failed to process resume {}: {}", resumeId, e.getMessage());
+            updateStatus(resume, ApplicationStatus.FAILED, "Error: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void updateStatus(Resume resume, ApplicationStatus status, String comment) {
+        resume.setStatus(status);
+        resumeRepository.save(resume);
+
+        ResumeStatusHistory history = new ResumeStatusHistory();
+        history.setResume(resume);
+        history.setStatus(status);
+        history.setStatusComment(comment);
+        history.setLocalDateTime(LocalDateTime.now());
+        historyRepository.save(history);
+    }
+}

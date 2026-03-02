@@ -16,7 +16,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ResumeController {
 
-    private final ResumeService resumeService;
+    private final ResumeService resumeServiceImpl;
 
     @PostMapping(value = "/upload/{jdId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UUID> uploadResume(
@@ -29,11 +29,11 @@ public class ResumeController {
         try {
             // 1. Initiate the record and link User + JD
             // This will throw DuplicateApplicationException if they apply twice
-            UUID resumeId = resumeService.initiateAnalysis(name, email, file, jdId, userId);
+            UUID resumeId = resumeServiceImpl.initiateAnalysis(name, email, file, jdId, userId);
 
             // 2. Start the background NLP comparison
             // Being @Async, this runs in a separate thread
-            resumeService.processResume(resumeId);
+            resumeServiceImpl.processResume(resumeId);
 
             // 202 Accepted is the correct status for background tasks
             return ResponseEntity.accepted().body(resumeId);
