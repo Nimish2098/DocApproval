@@ -1,6 +1,7 @@
 package com.Project.DocApproval.model;
 
 import com.Project.DocApproval.enums.Role;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -23,6 +24,7 @@ public class User {
         private String email;
 
         @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
+        @JsonManagedReference // This side will be included in the JSON
         private List<JobDescription> jobDescriptions;
 
         // A user can upload many Resumes (Individual role)

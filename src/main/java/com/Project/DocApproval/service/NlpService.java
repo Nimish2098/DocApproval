@@ -5,51 +5,57 @@ import opennlp.tools.postag.POSTaggerME;
 import opennlp.tools.tokenize.WhitespaceTokenizer;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
+import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
+@Slf4j
 @Service
 public class NlpService {
 
-    public Set<String> extractTechnicalNouns(String text) {
+    private POSModel posModel; // Load once, reuse many times
+
+    @PostConstruct
+    public void init() {
         try (InputStream modelIn = new ClassPathResource("en-pos-maxent.bin").getInputStream()) {
-            POSModel model = new POSModel(modelIn);
-            POSTaggerME tagger = new POSTaggerME(model);
-
-            // 1. Tokenize the input text
-            String[] rawTokens = WhitespaceTokenizer.INSTANCE.tokenize(text.toLowerCase());
-
-            // 2. Cleanup: Remove punctuation attached to words
-            List<String> cleanedTokensList = new ArrayList<>();
-            for (String token : rawTokens) {
-                // Regex: Removes anything that isn't a letter or number
-                String clean = token.replaceAll("[^a-zA-Z0-9]", "");
-                if (!clean.isEmpty()) {
-                    cleanedTokensList.add(clean);
-                }
-            }
-
-            String[] tokens = cleanedTokensList.toArray(new String[0]);
-
-            // 3. Generate POS tags (NN = Noun, NNP = Proper Noun)
-            String[] tags = tagger.tag(tokens);
-
-            Set<String> filteredKeywords = new HashSet<>();
-            for (int i = 0; i < tags.length; i++) {
-                // Only keep Nouns and Proper Nouns
-                if (tags[i].startsWith("NN")) {
-                    filteredKeywords.add(tokens[i]);
-                }
-            }
-
-            return filteredKeywords;
+            this.posModel = new POSModel(modelIn);
+            log.info("NLP POS Model loaded successfully.");
         } catch (IOException e) {
-            throw new RuntimeException("NLP Model failed to load. Ensure en-pos-maxent.bin is in src/main/resources", e);
+            log.error("Failed to load NLP model. Skills extraction will be disabled.");
+            throw new RuntimeException("NLP Model missing: en-pos-maxent.bin", e);
         }
+    }
+
+    public Set<String> extractTechnicalNouns(String text) {
+        if (text == null || text.isBlank()) return Collections.emptySet();
+
+        POSTaggerME tagger = new POSTaggerME(posModel);
+
+        // 1. Tokenize and clean in one pass
+        String[] rawTokens = WhitespaceTokenizer.INSTANCE.tokenize(text.toLowerCase());
+        List<String> tokensList = new ArrayList<>();
+
+        for (String token : rawTokens) {
+            String clean = token.replaceAll("[^a-zA-Z0-9-]", ""); // Keep hyphens for "Spring-Boot"
+            if (!clean.isEmpty()) {
+                tokensList.add(clean);
+            }
+        }
+
+        String[] tokens = tokensList.toArray(new String[0]);
+        String[] tags = tagger.tag(tokens);
+
+        Set<String> filteredKeywords = new HashSet<>();
+        for (int i = 0; i < tags.length; i++) {
+            // Filter for Nouns (NN), Proper Nouns (NNP), or Plural Nouns (NNS)
+            if (tags[i].startsWith("NN")) {
+                filteredKeywords.add(tokens[i]);
+            }
+        }
+
+        return filteredKeywords;
     }
 }

@@ -4,6 +4,7 @@ import com.Project.DocApproval.model.User;
 import com.Project.DocApproval.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,15 +24,15 @@ public class UserController {
         return userService.addUser(request);
     }
 
-    @PostMapping("/{id}")
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    public User updateUser(@PathVariable UUID id,@RequestBody User user){
-        return userService.updateUser(id,user);
+    // Changed to PUT for standard resource updates
+    @PutMapping("/{id}")
+    public ResponseEntity<User> updateUser(@PathVariable UUID id, @RequestBody User user){
+        return ResponseEntity.ok(userService.updateUser(id, user));
     }
 
     @PatchMapping("/{id}")
-    public User patchUser(@PathVariable UUID id, @RequestBody Map<String,Object>map){
-        return userService.patchUser(id,map);
+    public ResponseEntity<User> patchUser(@PathVariable UUID id, @RequestBody Map<String, Object> map){
+        return ResponseEntity.ok(userService.patchUser(id, map));
     }
 
     @DeleteMapping("/delete/{id}")
@@ -40,10 +41,10 @@ public class UserController {
         userService.deleteUser(id);
     }
 
-
+    // Changed from FOUND (302) to OK (200) for standard GET requests
     @GetMapping
-    @ResponseStatus(HttpStatus.FOUND)
-    public List<User> getAllUsers(){
-        return userService.getAllUsers();
+    public ResponseEntity<List<User>> getAllUsers(){
+        List<User> users = userService.getAllUsers();
+        return ResponseEntity.ok(users);
     }
 }

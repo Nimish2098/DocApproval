@@ -8,4 +8,5 @@ import java.util.UUID;
 
 @Repository
 public interface JobDescriptionRepository extends JpaRepository<JobDescription, UUID> {
+    boolean existsByJobTitleAndOwnerId(String jobTitle, UUID ownerId);
 }

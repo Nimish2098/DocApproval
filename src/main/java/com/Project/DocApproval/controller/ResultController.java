@@ -1,10 +1,10 @@
 package com.Project.DocApproval.controller;
 
 import com.Project.DocApproval.dto.AnalysisReportResponse;
-import com.Project.DocApproval.enums.ApplicationStatus;
 import com.Project.DocApproval.model.Resume;
 import com.Project.DocApproval.repository.ResumeRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,16 +18,21 @@ public class ResultController {
     private final ResumeRepository resumeRepository;
 
     @GetMapping("/{trackingId}")
-    public ResponseEntity<AnalysisReportResponse> getReport(@PathVariable UUID trackingId) {
+    public ResponseEntity<AnalysisReportResponse> getReport(
+            @PathVariable UUID trackingId,
+            @RequestHeader("X-User-Id") UUID userId) { // Secure User Header
+
         return resumeRepository.findById(trackingId)
-                .map(this::mapToResponse) // Clean hand-off to the helper method
-                .map(ResponseEntity::ok)
+                .map(resume -> {
+                    // SECURITY: Ensure the resume belongs to the requester
+                    if (!resume.getCandidate().getId().equals(userId)) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).<AnalysisReportResponse>build();
+                    }
+                    return ResponseEntity.ok(mapToResponse(resume));
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    /**
-     * Converts the database Entity into a clean JSON Response for the User.
-     */
     private AnalysisReportResponse mapToResponse(Resume resume) {
         String message = switch (resume.getStatus()) {
             case COMPLETED -> generateFeedback(resume.getMatchScore());
@@ -39,7 +44,7 @@ public class ResultController {
                 resume.getId(),
                 resume.getCandidateName(),
                 resume.getStatus(),
-                resume.getMatchScore(), // This will be null until COMPLETED
+                resume.getMatchScore(),
                 resume.getMissingSkills(),
                 message
         );
@@ -49,6 +54,6 @@ public class ResultController {
         if (score == null) return "No score calculated yet.";
         if (score < 40) return "Significant skill gaps detected. You're basically a stranger to this JD.";
         if (score < 75) return "Moderate match. You have potential, but need to level up.";
-        return "Strong match! You and this JD are a match made in heaven.";
+        return "Strong match! Your profile aligns well with the requirements.";
     }
 }

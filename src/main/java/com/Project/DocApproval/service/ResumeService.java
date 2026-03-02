@@ -1,6 +1,8 @@
 package com.Project.DocApproval.service;
 
 import com.Project.DocApproval.enums.ApplicationStatus;
+import com.Project.DocApproval.exceptions.DuplicateApplicationException;
+import com.Project.DocApproval.exceptions.ResourceNotFoundException;
 import com.Project.DocApproval.model.AnalysisResult;
 import com.Project.DocApproval.model.Resume;
 import com.Project.DocApproval.model.ResumeStatusHistory;
@@ -21,7 +23,7 @@ import com.Project.DocApproval.repository.*;
 
 import java.util.Set;
 
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ResumeService {
@@ -36,6 +38,10 @@ public class ResumeService {
 
     @Transactional
     public UUID initiateAnalysis(String name, String email, MultipartFile file, UUID jdId, UUID userId) throws IOException {
+
+        if (resumeRepository.existsByEmailAndJobDescriptionId(email, jdId)) {
+            throw new DuplicateApplicationException();
+        }
         // 1. Fetch parents
         User user = userRepository.findById(userId).orElseThrow();
         JobDescription jd = jdRepository.findById(jdId).orElseThrow();
@@ -61,7 +67,8 @@ public class ResumeService {
     @Async
     @Transactional
     public void processResume(UUID resumeId) {
-        Resume resume = resumeRepository.findById(resumeId).orElseThrow();
+        Resume resume = resumeRepository.findById(resumeId)
+                .orElseThrow(()-> new ResourceNotFoundException("Resume not Found for Processing"+resumeId));
 
         try {
             updateStatus(resume, ApplicationStatus.PARSING, "Extracting text.");
@@ -85,6 +92,7 @@ public class ResumeService {
             updateStatus(resume, ApplicationStatus.COMPLETED, "Analysis successful.");
 
         } catch (Exception e) {
+            log.error("Failed to process resume {}: {}", resumeId, e.getMessage());
             updateStatus(resume, ApplicationStatus.FAILED, "Error: " + e.getMessage());
         }
     }

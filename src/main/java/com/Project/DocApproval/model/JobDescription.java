@@ -1,6 +1,7 @@
 package com.Project.DocApproval.model;
 
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -37,5 +38,6 @@ public class JobDescription {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
+    @JsonBackReference // Prevents infinite recursion in JSON
     private User owner; // The recruiter or company admin
 }

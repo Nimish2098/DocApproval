@@ -1,5 +1,7 @@
 package com.Project.DocApproval.service;
 
+import com.Project.DocApproval.exceptions.DuplicateApplicationException;
+import com.Project.DocApproval.exceptions.ResourceNotFoundException;
 import com.Project.DocApproval.model.JobDescription;
 import com.Project.DocApproval.model.User;
 import com.Project.DocApproval.repository.JobDescriptionRepository;
@@ -25,7 +27,12 @@ public class JobDescriptionService {
 
     @Transactional
     public UUID createJobDescription(String title, MultipartFile file, String manualText, UUID ownerId) throws IOException {
-        User owner = userRepository.findById(ownerId).orElseThrow();
+
+        // 1. CIRCUIT BREAKER: Stop the infinite loop/duplicates
+        if (jdRepository.existsByJobTitleAndOwnerId(title, ownerId)) {
+            throw new DuplicateApplicationException(); // This triggers your GlobalExceptionHandler
+        }
+        User owner = userRepository.findById(ownerId).orElseThrow(()-> new ResourceNotFoundException("User not found"+ownerId));
 
         JobDescription jd = new JobDescription();
         jd.setJobTitle(title);

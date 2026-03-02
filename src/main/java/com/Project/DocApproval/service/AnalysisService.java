@@ -1,25 +1,25 @@
 package com.Project.DocApproval.service;
 
 import com.Project.DocApproval.model.AnalysisResult;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.*;
 
 @Service
-@RequiredArgsConstructor
 public class AnalysisService {
 
-    // Note: This takes the STRING extracted by Tika, not a file path
     public AnalysisResult performAnalysis(String extractedResumeText, Set<String> requiredSkills) {
+        // 1. Safety Check: If Tika returned nothing or JD has no keywords, score is 0
+        if (extractedResumeText == null || extractedResumeText.isBlank() || requiredSkills == null || requiredSkills.isEmpty()) {
+            return new AnalysisResult(0.0, new ArrayList<>(requiredSkills != null ? requiredSkills : Collections.emptySet()), "Could not perform analysis: missing data.");
+        }
 
-        // 1. Convert the extracted text to lowercase for case-insensitive matching
         String content = extractedResumeText.toLowerCase();
-
-        // 2. Identify missing skills by checking if the text contains the keyword
         List<String> missingSkills = new ArrayList<>();
         int matchedCount = 0;
 
+        // 2. The Core Comparison Logic
         for (String skill : requiredSkills) {
+            // Check if the JD keyword exists anywhere in the resume text
             if (content.contains(skill.toLowerCase())) {
                 matchedCount++;
             } else {
@@ -28,20 +28,17 @@ public class AnalysisService {
         }
 
         // 3. Calculate match percentage
-        double score = 0.0;
-        if (!requiredSkills.isEmpty()) {
-            score = ((double) matchedCount / requiredSkills.size()) * 100;
-        }
+        double score = ((double) matchedCount / requiredSkills.size()) * 100;
 
-        // 4. Generate the feedback string
         String feedback = generateFeedback(score, missingSkills);
 
+        // 4. Return the record with names matching your ResumeService calls
         return new AnalysisResult(score, missingSkills, feedback);
     }
 
     private String generateFeedback(double score, List<String> missing) {
-        if (score < 40) return "Profile Mismatch. Missing: " + String.join(", ", missing);
-        if (score < 80) return "Partial Match. Consider learning: " + String.join(", ", missing);
-        return "Strong Match. Your profile aligns well.";
+        if (score < 40) return "Profile Mismatch. Missing key skills: " + String.join(", ", missing);
+        if (score < 75) return "Partial Match. Consider improving: " + String.join(", ", missing);
+        return "Strong Match. Your profile aligns well with the requirements.";
     }
 }
