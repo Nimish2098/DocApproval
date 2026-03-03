@@ -1,10 +1,14 @@
 package com.Project.DocApproval.controller;
 
+import com.Project.DocApproval.model.User;
+import com.Project.DocApproval.repository.UserRepository;
 import com.Project.DocApproval.service.ResumeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,14 +25,17 @@ public class ResumeController {
     @PostMapping(value = "/upload/{jdId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UUID> uploadResume(
             @PathVariable UUID jdId,
-            @RequestHeader("X-User-Id") UUID userId, // Simulated Auth Header
             @RequestParam("file") MultipartFile file,
             @RequestParam("name") String name,
-            @RequestParam("email") String email) {
+            @RequestParam("email") String email,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
 
         try {
-            // 1. Initiate the record and link User + JD
-            // This will throw DuplicateApplicationException if they apply twice
+            private final UserRepository userRepository;
+            User currentUser = userRepository.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            UUID userId = currentUser.getId();
             UUID resumeId = resumeServiceImpl.initiateAnalysis(name, email, file, jdId, userId);
 
             // 2. Start the background NLP comparison
