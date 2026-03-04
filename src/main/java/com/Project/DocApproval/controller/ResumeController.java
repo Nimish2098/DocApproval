@@ -21,6 +21,7 @@ import java.util.UUID;
 public class ResumeController {
 
     private final ResumeService resumeServiceImpl;
+    private final UserRepository userRepository;
 
     @PostMapping(value = "/upload/{jdId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UUID> uploadResume(
@@ -32,7 +33,6 @@ public class ResumeController {
 
 
         try {
-            private final UserRepository userRepository;
             User currentUser = userRepository.findByEmail(userDetails.getUsername())
                     .orElseThrow(() -> new RuntimeException("User not found"));
             UUID userId = currentUser.getId();

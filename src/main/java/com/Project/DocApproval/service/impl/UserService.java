@@ -29,7 +29,7 @@ public class UserService implements com.Project.DocApproval.service.UserService 
         User existingUser = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
-        existingUser.setUsername(user.getUsername());
+        existingUser.setName(user.getUsername());
         existingUser.setEmail(user.getEmail());
 
         return userRepository.save(existingUser);
@@ -43,7 +43,7 @@ public class UserService implements com.Project.DocApproval.service.UserService 
 
         updates.forEach((key, value) -> {
             switch (key) {
-                case "username": existingUser.setUsername((String) value); break;
+                case "username": existingUser.setName((String) value); break;
                 case "email": existingUser.setEmail((String) value); break;
             }
         });

@@ -1,11 +1,15 @@
 package com.Project.DocApproval.controller;
 
 import com.Project.DocApproval.exceptions.InvalidJobDescriptionException;
+import com.Project.DocApproval.model.User;
+import com.Project.DocApproval.repository.UserRepository;
 import com.Project.DocApproval.service.JobDescriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,14 +22,17 @@ import java.util.UUID;
 public class JobDescriptionController {
 
     private final JobDescriptionService jdService;
-
+    private final UserRepository userRepository;
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UUID> postJob(
             @RequestParam("title") String title,
             @RequestParam(value = "file", required = false) MultipartFile file,
             @RequestParam(value = "manualText", required = false) String manualText,
-            @RequestHeader("X-User-Id") UUID ownerId) throws IOException {
+            @AuthenticationPrincipal UserDetails userDetails) throws IOException {
 
+        User currentUser = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(()->  new RuntimeException(("User not found")));
+        UUID ownerId = currentUser.getId();
         // 1. Validation Logic
         // Throwing a custom exception here allows the GlobalExceptionHandler to return a 400 Bad Request
         if ((file == null || file.isEmpty()) && (manualText == null || manualText.isBlank())) {

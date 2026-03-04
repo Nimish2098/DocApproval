@@ -2,10 +2,14 @@ package com.Project.DocApproval.controller;
 
 import com.Project.DocApproval.dto.AnalysisReportResponse;
 import com.Project.DocApproval.model.Resume;
+import com.Project.DocApproval.model.User;
 import com.Project.DocApproval.repository.ResumeRepository;
+import com.Project.DocApproval.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -16,12 +20,14 @@ import java.util.UUID;
 public class ResultController {
 
     private final ResumeRepository resumeRepository;
-
+    private final UserRepository userRepository;
     @GetMapping("/{trackingId}")
     public ResponseEntity<AnalysisReportResponse> getReport(
             @PathVariable UUID trackingId,
-            @RequestHeader("X-User-Id") UUID userId) { // Secure User Header
-
+            @AuthenticationPrincipal UserDetails userDetails) { // Secure User Header
+        User currentUser = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(()-> new RuntimeException("User Not Found"));
+        UUID userId = currentUser.getId();
         return resumeRepository.findById(trackingId)
                 .map(resume -> {
                     // SECURITY: Ensure the resume belongs to the requester

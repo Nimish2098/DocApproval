@@ -16,11 +16,14 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 public class User implements UserDetails {
-
+        @Id
+        @GeneratedValue(strategy = GenerationType.UUID)
         private UUID id;
         private String email;
         private String password;
         private Role role;
+
+        private String name;
 
         @Override
         public String getUsername() {
