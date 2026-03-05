@@ -8,6 +8,7 @@ import com.Project.DocApproval.model.User;
 import com.Project.DocApproval.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,9 +76,14 @@ public class UserService {
 
     // ── Admin: all users ─────────────────────────────────────────────
     public List<UserProfileResponse> getAllUsers() {
-        return userRepository.findAll()
-                .stream()
-                .map(u -> new UserProfileResponse(u.getId(), u.getName(), u.getEmail()))
-                .toList();
+
+        try {
+            return userRepository.findAll()
+                    .stream()
+                    .map(u -> new UserProfileResponse(u.getId(), u.getName(), u.getEmail()))
+                    .toList();
+        } catch (Exception e) {
+            throw new UsernameNotFoundException("User Not Found"+e);
+        }
     }
 }

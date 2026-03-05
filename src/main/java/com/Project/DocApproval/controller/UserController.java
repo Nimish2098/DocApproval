@@ -4,7 +4,8 @@ import com.Project.DocApproval.dto.ChangePasswordRequest;
 import com.Project.DocApproval.dto.UpdateProfileRequest;
 import com.Project.DocApproval.dto.UserProfileResponse;
 import com.Project.DocApproval.model.User;
-import com.Project.DocApproval.service.UserService;
+import com.Project.DocApproval.repository.UserRepository;
+import com.Project.DocApproval.service.impl.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-@RestController
-@RequestMapping("/user")
-@RequiredArgsConstructor
 @RestController
 @RequestMapping("/user")
 @RequiredArgsConstructor
