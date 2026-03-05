@@ -1,11 +1,17 @@
 package com.Project.DocApproval.service.impl;
 
+import com.Project.DocApproval.dto.ChangePasswordRequest;
+import com.Project.DocApproval.dto.UpdateProfileRequest;
+import com.Project.DocApproval.dto.UserProfileResponse;
 import com.Project.DocApproval.exceptions.ResourceNotFoundException;
 import com.Project.DocApproval.model.User;
 import com.Project.DocApproval.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -13,53 +19,65 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class UserService implements com.Project.DocApproval.service.UserService {
+public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    @Override
-    public User addUser(User user) {
-        return userRepository.save(user);
-    }
+    // ── Update name / email ──────────────────────────────────────────
+    public UserProfileResponse updateProfile(UUID id, UpdateProfileRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-    @Transactional
-    @Override
-    public User updateUser(UUID id, User user) {
-        // Handle "Not Found" using your custom exception
-        User existingUser = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
-
-        existingUser.setName(user.getUsername());
-        existingUser.setEmail(user.getEmail());
-
-        return userRepository.save(existingUser);
-    }
-
-    @Transactional
-    @Override
-    public User patchUser(UUID id, Map<String, Object> updates) {
-        User existingUser = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
-
-        updates.forEach((key, value) -> {
-            switch (key) {
-                case "username": existingUser.setName((String) value); break;
-                case "email": existingUser.setEmail((String) value); break;
-            }
-        });
-        return userRepository.save(existingUser);
-    }
-
-    @Override
-    public void deleteUser(UUID id) {
-        if (!userRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Cannot delete: User not found with id: " + id);
+        // Only update fields that were actually sent
+        if (request.getName() != null && !request.getName().isBlank()) {
+            user.setName(request.getName());
         }
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
+            // Check new email isn't already taken by someone else
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Email already in use");
+            }
+            user.setEmail(request.getEmail());
+        }
+
+        User saved = userRepository.save(user);
+        return new UserProfileResponse(saved.getId(), saved.getName(), saved.getEmail());
+    }
+
+    // ── Change password ──────────────────────────────────────────────
+    public void changePassword(UUID id, ChangePasswordRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 1. Verify current password is correct
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Current password is incorrect");
+        }
+
+        // 2. Confirm new passwords match
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "New passwords do not match");
+        }
+
+        // 3. Save BCrypt hashed new password
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
+
+    // ── Delete account ───────────────────────────────────────────────
+    public void deleteUser(UUID id) {
         userRepository.deleteById(id);
     }
 
-    @Override
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    // ── Admin: all users ─────────────────────────────────────────────
+    public List<UserProfileResponse> getAllUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(u -> new UserProfileResponse(u.getId(), u.getName(), u.getEmail()))
+                .toList();
     }
 }

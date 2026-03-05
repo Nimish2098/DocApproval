@@ -4,6 +4,7 @@ import com.Project.DocApproval.service.impl.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -30,14 +31,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)         // REST APIs don't use CSRF
+                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // ── Public endpoints (no token needed) ──────────────
-                        .requestMatchers(
-                                "/api/v1/auth/**",       // login & register
-                                "/user"                  // createUser (public registration)
-                        ).permitAll()
-                        // ── Everything else requires a valid JWT ─────────────
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+
+                        .requestMatchers(HttpMethod.GET, "/user").hasRole("ADMIN")
+
+                        .requestMatchers("/user/profile").authenticated()
+                        .requestMatchers("/user/change-password").authenticated()
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess

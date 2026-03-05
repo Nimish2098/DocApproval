@@ -21,7 +21,9 @@ public class User implements UserDetails {
         private UUID id;
         private String email;
         private String password;
-        private Role role;
+        @Enumerated(EnumType.STRING)           // ← stores "USER" / "ADMIN" as text in DB
+        @Column(nullable = false)
+        private Role role = Role.USER;
 
         private String name;
 

@@ -1,10 +1,15 @@
 package com.Project.DocApproval.controller;
 
+import com.Project.DocApproval.dto.ChangePasswordRequest;
+import com.Project.DocApproval.dto.UpdateProfileRequest;
+import com.Project.DocApproval.dto.UserProfileResponse;
 import com.Project.DocApproval.model.User;
 import com.Project.DocApproval.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,37 +19,65 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/user")
 @RequiredArgsConstructor
+@RestController
+@RequestMapping("/user")
+@RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
+    private final UserRepository userRepository;
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public User createUser(@RequestBody User request){
-        return userService.addUser(request);
+    // ── GET OWN PROFILE ──────────────────────────────────────────────
+    @GetMapping("/profile")
+    public ResponseEntity<UserProfileResponse> getProfile(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        User user = getLoggedInUser(userDetails);
+        return ResponseEntity.ok(new UserProfileResponse(
+                user.getId(), user.getName(), user.getEmail()
+        ));
     }
 
-    // Changed to PUT for standard resource updates
-    @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable UUID id, @RequestBody User user){
-        return ResponseEntity.ok(userService.updateUser(id, user));
+    // ── UPDATE NAME / EMAIL ──────────────────────────────────────────
+    @PutMapping("/profile")
+    public ResponseEntity<UserProfileResponse> updateProfile(
+            @RequestBody UpdateProfileRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        User user = getLoggedInUser(userDetails);
+        return ResponseEntity.ok(userService.updateProfile(user.getId(), request));
     }
 
-    @PatchMapping("/{id}")
-    public ResponseEntity<User> patchUser(@PathVariable UUID id, @RequestBody Map<String, Object> map){
-        return ResponseEntity.ok(userService.patchUser(id, map));
+    // ── CHANGE PASSWORD ──────────────────────────────────────────────
+    @PatchMapping("/change-password")
+    public ResponseEntity<String> changePassword(
+            @RequestBody ChangePasswordRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        User user = getLoggedInUser(userDetails);
+        userService.changePassword(user.getId(), request);
+        return ResponseEntity.ok("Password updated successfully");
     }
 
-    @DeleteMapping("/delete/{id}")
+    // ── DELETE OWN ACCOUNT ───────────────────────────────────────────
+    @DeleteMapping("/profile")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteUser(@PathVariable UUID id){
-        userService.deleteUser(id);
+    public void deleteAccount(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        User user = getLoggedInUser(userDetails);
+        userService.deleteUser(user.getId());
     }
 
-    // Changed from FOUND (302) to OK (200) for standard GET requests
+    // ── ADMIN: GET ALL USERS ─────────────────────────────────────────
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers(){
-        List<User> users = userService.getAllUsers();
-        return ResponseEntity.ok(users);
+    public ResponseEntity<List<UserProfileResponse>> getAllUsers() {
+        return ResponseEntity.ok(userService.getAllUsers());
+    }
+
+    // ── HELPER ───────────────────────────────────────────────────────
+    private User getLoggedInUser(UserDetails userDetails) {
+        return userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }
