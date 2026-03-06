@@ -1,119 +1,198 @@
-# Automated Approval System
+# DocApproval — Resume Analyzer API
 
-A robust and automated document approval system built with Spring Boot, designed to streamline workflow processes.
+A Spring Boot REST API that analyzes resumes against job descriptions using Apache Tika for document parsing and Apache OpenNLP for skill extraction. Built with stateless JWT authentication and role-based access control.
+
+---
 
 ## Features
-- **User Management**: Create, update, and manage user profiles.
-- **Request Workflow**: Submit and track document approval requests.
-- **Decision Tracking**: Record and manage approval decisions.
-- **Configurable Request Types**: Define multiple types of requests for different workflows.
-- **Automated API Documentation**: Integrated Swagger UI for easy API exploration.
 
-## Technologies Used
-- **Java:** 21
-- **Framework:** Spring Boot 3.5.5
-- **Database:** MySQL
-- **Tools:** Maven, Lombok
-- **API Documentation:** SpringDoc OpenAPI (Swagger UI)
+- **Resume Analysis** — Upload a resume (PDF/DOCX) and compare it against a job description to get a match score and list of missing skills
+- **JWT Authentication** — Stateless auth with short-lived access tokens and long-lived refresh tokens
+- **Role-Based Access** — `USER` and `ADMIN` roles with endpoint-level protection
+- **Document Parsing** — Apache Tika auto-detects PDF vs DOCX and extracts raw text
+- **NLP Skill Extraction** — Apache OpenNLP tags technical nouns from job description text
+- **Profile Management** — Users can update their name, email, and password
+- **Token Refresh & Logout** — Refresh tokens stored in DB, invalidated on logout
+- **Metrics** — Prometheus-compatible metrics via Spring Boot Actuator
 
-## Prerequisites
-Before running the application, ensure you have the following installed:
-- [Java Development Kit (JDK) 21](https://www.oracle.com/java/technologies/downloads/#java21)
-- [Maven](https://maven.apache.org/download.cgi)
-- [MySQL Server](https://dev.mysql.com/downloads/mysql/)
+---
 
-## Setup and Installation
+## Tech Stack
 
-1.  **Clone the repository:**
-    ```bash
-    git clone <repository-url>
-    cd DocApproval
-    ```
+| Technology | Role |
+|------------|------|
+| Spring Boot 3.5 | Core framework, REST API |
+| Spring Security | JWT-based stateless authentication |
+| PostgreSQL | Primary database |
+| Apache Tika | PDF and DOCX text extraction |
+| Apache OpenNLP | NLP-based skill extraction from JD |
+| JJWT | JWT token generation and validation |
+| Hibernate / JPA | ORM and database mapping |
+| Lombok | Boilerplate reduction |
+| Micrometer + Prometheus | Application metrics |
 
-2.  **Database Configuration:**
-    - Create a MySQL database named `document_db`.
-    - The application is configured to use the following default credentials in `src/main/resources/application.yml`:
-        - **Username:** `root`
-        - **Password:** `Ni@12345`
-    - *Note: Update these credentials in `application.yml` or via environment variables to match your local setup.*
+---
 
-3.  **Build the project:**
-    ```bash
-    ./mvnw clean install
-    ```
+## Project Structure
 
-## Running the Application
+```
+src/main/java/com/Project/DocApproval/
+├── controller/
+│   ├── AuthController.java
+│   ├── UserController.java
+│   ├── ResumeController.java
+│   ├── ResultController.java
+│   └── JobDescriptionController.java
+├── service/
+│   ├── AuthService.java
+│   ├── UserService.java
+│   ├── ResumeService.java
+│   ├── RefreshTokenService.java
+│   └── MetricsService.java
+├── security/
+│   ├── JwtService.java
+│   ├── JwtAuthenticationFilter.java
+│   ├── SecurityConfig.java
+│   └── UserDetailsServiceImpl.java
+├── model/
+│   ├── User.java
+│   └── RefreshToken.java
+├── repository/
+│   ├── UserRepository.java
+│   └── RefreshTokenRepository.java
+├── dto/
+│   ├── AuthResponse.java
+│   ├── RegisterRequest.java
+│   ├── LoginRequest.java
+│   ├── RefreshTokenRequest.java
+│   ├── UpdateProfileRequest.java
+│   ├── ChangePasswordRequest.java
+│   └── UserProfileResponse.java
+└── enums/
+    └── Role.java
+```
 
-To run the application locally:
+---
+
+## API Endpoints
+
+### Auth — `/api/v1/auth`
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/v1/auth/register` | Public | Register a new user |
+| POST | `/api/v1/auth/login` | Public | Login and receive tokens |
+| POST | `/api/v1/auth/refresh-token` | Public | Get new access token |
+| POST | `/api/v1/auth/logout` | Bearer Token | Invalidate refresh token |
+
+### User — `/user`
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/user/profile` | Bearer Token | Get own profile |
+| PUT | `/user/profile` | Bearer Token | Update name or email |
+| PATCH | `/user/change-password` | Bearer Token | Change password |
+| DELETE | `/user/profile` | Bearer Token | Delete own account |
+| GET | `/user` | Admin only | Get all users |
+
+### Job Descriptions — `/api/v1/jobs`
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/v1/jobs/create` | Bearer Token | Create a job description |
+
+### Resumes — `/api/v1/resumes`
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/v1/resumes/upload/{jdId}` | Bearer Token | Upload resume for analysis |
+
+### Results — `/api/v1/results`
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/v1/results/{trackingId}` | Bearer Token | Get analysis report |
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Java 21
+- Maven
+- PostgreSQL
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/your-username/DocApproval.git
+cd DocApproval
+```
+
+### 2. Create the database
+
+```sql
+CREATE DATABASE resume_db;
+```
+
+### 3. Configure environment variables
+
+Set the following variables in your environment or IDE run configuration:
+
+```
+SPRING_DATASOURCE_URL
+SPRING_DATASOURCE_USERNAME
+SPRING_DATASOURCE_PASSWORD
+JWT_SECRET
+JWT_EXPIRATION
+JWT_REFRESH_EXPIRATION
+```
+
+### 4. Run the application
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-The application will start on `http://localhost:8080`.
+App starts at `http://localhost:8080`
 
-## API Documentation
+---
 
-The application uses Swagger UI for API documentation. Once the application is running, you can access it at:
-
-[http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
-
-## Project Structure
+## Authentication Flow
 
 ```
-src
-+---main
-|   +---java
-|   |   \---com
-|   |       \---Project
-|   |           \---DocApproval
-|   |               +---controller
-|   |               +---dto
-|   |               +---enums
-|   |               +---exceptions
-|   |               +---model
-|   |               +---repository
-|   |               \---service
-|   \---resources
+Register or Login
+  → receive accessToken + refreshToken
+
+Use accessToken on every request:
+  Authorization: Bearer <accessToken>
+
+When accessToken expires:
+  POST /api/v1/auth/refresh-token
+  → receive new accessToken
+
+On logout:
+  POST /api/v1/auth/logout
+  → refreshToken deleted from DB
 ```
 
-## API Reference
+---
 
-### User Management (`/user`)
-- `POST /user` - Create a new user.
-- `POST /user/{id}` - Update an existing user.
-- `PATCH /user/{id}` - Partially update a user.
-- `DELETE /user/delete/{id}` - Delete a user.
+## Metrics
 
-### Request Management (`/Request`)
-- `POST /Request` - Create a new request.
-- `POST /Request/{id}` - Update a request.
-- `PATCH /Request/{id}` - Partially update a request.
-- `DELETE /Request/{id}` - Delete a request.
+Prometheus metrics exposed at `/actuator/prometheus`
 
-### Decision Management (`/decision`)
-- `POST /decision` - Add a decision.
-- `POST /decision/{id}` - Update a decision.
-- `PATCH /decision/{id}` - Partially update a decision.
-- `DELETE /decision/{id}` - Delete a decision.
+Custom business metrics tracked:
 
-### Request Type Management (`/request_type`)
-- `POST /request_type` - Add a request type.
-- `POST /request_type/{id}` - Update a request type.
-- `PATCH /request_type/{id}` - Partially update a request type.
-- `DELETE /request_type/{id}` - Delete a request type.
+- `resume.uploads.total` — total resumes uploaded
+- `resume.match.score` — distribution of match scores
+- `resume.analysis.duration` — NLP analysis time
+- `auth.login.success` — successful logins
+- `auth.login.failure` — failed login attempts
 
-## Contributing
-
-Contributions are welcome! Please follow these steps:
-1.  Fork the repository.
-2.  Create a feature branch (`git checkout -b feature/AmazingFeature`).
-3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`).
-4.  Push to the branch (`git push origin feature/AmazingFeature`).
-5.  Open a Pull Request.
+---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-
+This project is built for educational purposes as a Personal project.
