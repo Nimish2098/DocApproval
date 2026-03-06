@@ -8,10 +8,11 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 public class AuthResponse {
-    private String token;
+    private String accesstoken;
+    private String refreshToken;
     private UUID userId;
     private String name;
     private String email;
-    private String refreshToken;    // ← added
+        // ← added
 
 }

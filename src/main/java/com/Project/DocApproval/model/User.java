@@ -15,6 +15,8 @@ import java.util.UUID;
 @Table(name = "users")
 @Data
 @NoArgsConstructor
+@Builder
+@AllArgsConstructor
 public class User implements UserDetails {
         @Id
         @GeneratedValue(strategy = GenerationType.UUID)
