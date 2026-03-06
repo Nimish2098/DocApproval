@@ -1,4 +1,4 @@
-# DocApproval — Resume Analyzer API
+# Resume Analyzer API
 
 A Spring Boot REST API that analyzes resumes against job descriptions using Apache Tika for document parsing and Apache OpenNLP for skill extraction. Built with stateless JWT authentication and role-based access control.
 
