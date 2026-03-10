@@ -39,7 +39,7 @@ public class SecurityConfig {
 
                         .requestMatchers("/user/profile").authenticated()
                         .requestMatchers("/user/change-password").authenticated()
-
+                        .requestMatchers("/api/v1/latex/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess
