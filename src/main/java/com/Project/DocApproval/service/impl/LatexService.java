@@ -14,16 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.util.UriComponentsBuilder;
-
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,12 +29,6 @@ public class LatexService {
         private final LatexDocumentRepository latexRepository;
         private final UserRepository userRepository;
 
-        private final WebClient webClient = WebClient.builder()
-                        .baseUrl("https://latexonline.cc")
-                        .codecs(config -> config
-                                        .defaultCodecs()
-                                        .maxInMemorySize(10 * 1024 * 1024)) // 10MB for PDF
-                        .build();
 
         // ── Save or update source ─────────────────────────────────────
         public LatexDocumentResponse save(SaveLatexRequest request,
