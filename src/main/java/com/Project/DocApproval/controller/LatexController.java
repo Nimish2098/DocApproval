@@ -23,16 +23,22 @@ public class LatexController {
 
     private final LatexService latexService;
 
+    // ✅ Accept both plain text AND JSON
     @PostMapping(consumes = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<LatexDocumentResponse> save(
+    public ResponseEntity<LatexDocumentResponse> savePlainText(
             @RequestParam String title,
             @RequestBody String latexSource,
             @AuthenticationPrincipal UserDetails userDetails) {
-
         SaveLatexRequest request = new SaveLatexRequest();
         request.setTitle(title);
         request.setLatexSource(latexSource);
+        return ResponseEntity.ok(latexService.save(request, userDetails));
+    }
 
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)  // ← add this
+    public ResponseEntity<LatexDocumentResponse> saveJson(
+            @Valid @RequestBody SaveLatexRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(latexService.save(request, userDetails));
     }
 
