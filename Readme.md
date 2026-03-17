@@ -29,7 +29,6 @@ Deployed On Heroku Link
 | JJWT | JWT token generation and validation |
 | Hibernate / JPA | ORM and database mapping |
 | Lombok | Boilerplate reduction |
-| Micrometer + Prometheus | Application metrics |
 
 ---
 
