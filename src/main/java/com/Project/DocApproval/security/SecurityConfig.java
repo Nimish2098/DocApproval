@@ -30,6 +30,16 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final UserDetailsServiceImpl userDetailsService;
     private final CorsConfigurationSource corsConfigurationSource;
+
+    private static final String[] SWAGGER_WHITELIST = {
+            "/swagger-ui/**",
+            "/swagger-ui.html",
+            "/v3/api-docs/**",
+            "/v3/api-docs.yaml",
+            "/swagger-resources/**",
+            "/webjars/**"
+    };
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -39,7 +49,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/actuator/health").permitAll()  // ← add this
-
+                        .requestMatchers(SWAGGER_WHITELIST).permitAll()
                         .requestMatchers(HttpMethod.GET, "/user").hasRole("ADMIN")
 
                         .requestMatchers("/user/profile").authenticated()
