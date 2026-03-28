@@ -15,8 +15,8 @@ public class SwaggerConfig {
     public OpenAPI openAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Your API Title")
-                        .description("API Description")
+                        .title("ResuMatch")
+                        .description("API for different Functions")
                         .version("v1.0.0"))
                 .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
                 .components(new Components()
