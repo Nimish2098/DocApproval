@@ -4,10 +4,10 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class SaveLatexRequest {
+public class SaveDocumentRequest {
     @NotBlank(message = "Title is required")
     private String title;
 
-    @NotBlank(message = "LaTeX source is required")
-    private String latexSource;
+    @NotBlank(message = "Document content is required")
+    private String content;
 }

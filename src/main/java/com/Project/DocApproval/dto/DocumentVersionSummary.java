@@ -2,15 +2,15 @@ package com.Project.DocApproval.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
 @AllArgsConstructor
-public class LatexDocumentSummary {
+public class DocumentVersionSummary {
     private UUID id;
-    private String title;
-    private Boolean lastCompileSuccess;
-    private LocalDateTime updatedAt;
+    private String commitHash;
+    private String commitMessage;
+    private String authorName;
+    private LocalDateTime createdAt;
 }

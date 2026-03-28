@@ -6,45 +6,35 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-// model/LatexDocument.java
 @Entity
-@Table(name = "latex_documents")
+@Table(name = "document_versions")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class LatexDocument {
-
+public class DocumentVersion {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "document_id", nullable = false)
+    private Document document;
 
-    private String title;
-
-    @Column(columnDefinition = "TEXT")
-    private String latexSource;
-
-
-    @Column(columnDefinition = "BYTEA")
-    private byte[] compiledPdf;
-
-    private Boolean lastCompileSuccess = false;
+    private String commitHash;
+    private String commitMessage;
 
     @Column(columnDefinition = "TEXT")
-    private String lastCompileError;
+    private String contentSnapshot;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
 
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User author;
 }
