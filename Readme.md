@@ -178,18 +178,8 @@ On logout:
 
 ---
 
-## Metrics
-
-Prometheus metrics exposed at `/actuator/prometheus`
-
-Custom business metrics tracked:
-
-- `resume.uploads.total` — total resumes uploaded
-- `resume.match.score` — distribution of match scores
-- `resume.analysis.duration` — NLP analysis time
-- `auth.login.success` — successful logins
-- `auth.login.failure` — failed login attempts
-
+## Swagger DOC
+https://docapproval-api-fb4963d3a934.herokuapp.com/swagger-ui/index.html
 ---
 
 ## License
