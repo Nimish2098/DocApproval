@@ -21,7 +21,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class DocumentService {
+public class    DocumentService {
 
         private final DocumentRepository documentRepository;
         private final UserRepository userRepository;
