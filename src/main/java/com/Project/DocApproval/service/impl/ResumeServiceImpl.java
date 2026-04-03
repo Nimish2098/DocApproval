@@ -1,6 +1,6 @@
 package com.Project.DocApproval.service.impl;
 
-import com.Project.DocApproval.enums.ApplicationStatus;
+import com.Project.DocApproval.enums.ResumeStatus;
 import com.Project.DocApproval.exceptions.DuplicateApplicationException;
 import com.Project.DocApproval.exceptions.ResourceNotFoundException;
 import com.Project.DocApproval.model.AnalysisResult;
@@ -59,10 +59,10 @@ public class ResumeServiceImpl implements ResumeService {
         resume.setFilePath(path);
         resume.setCandidate(user); // Mapping User
         resume.setJobDescription(jd); // Mapping JD
-        resume.setStatus(ApplicationStatus.UPLOADED);
+        resume.setStatus(ResumeStatus.UPLOADED);
 
         Resume saved = resumeRepository.save(resume);
-        updateStatus(saved, ApplicationStatus.UPLOADED, "Initial upload complete.");
+        updateStatus(saved, ResumeStatus.UPLOADED, "Initial upload complete.");
 
         return saved.getId();
     }
@@ -75,10 +75,10 @@ public class ResumeServiceImpl implements ResumeService {
                 .orElseThrow(()-> new ResourceNotFoundException("Resume not Found for Processing"+resumeId));
 
         try {
-            updateStatus(resume, ApplicationStatus.PARSING, "Extracting text.");
+            updateStatus(resume, ResumeStatus.PARSING, "Extracting text.");
             String text = extractionService.extractText(resume.getFilePath());
 
-            updateStatus(resume, ApplicationStatus.ANALYZING, "Comparing against JD requirements.");
+            updateStatus(resume, ResumeStatus.ANALYZING, "Comparing against JD requirements.");
 
             // Get pre-analyzed keywords from the linked JD
             Set<String> requiredSkills = resume.getJobDescription().getExtractedKeywords();
@@ -90,19 +90,19 @@ public class ResumeServiceImpl implements ResumeService {
             resume.setMatchScore(result.matchScore());
             resume.setMissingSkills(result.missingSkills());
             resume.setAnalysisFeedback(result.analysisFeedback());
-            resume.setStatus(ApplicationStatus.COMPLETED);
+            resume.setStatus(ResumeStatus.COMPLETED);
 
             resumeRepository.save(resume);
-            updateStatus(resume, ApplicationStatus.COMPLETED, "Analysis successful.");
+            updateStatus(resume, ResumeStatus.COMPLETED, "Analysis successful.");
 
         } catch (Exception e) {
             log.error("Failed to process resume {}: {}", resumeId, e.getMessage());
-            updateStatus(resume, ApplicationStatus.FAILED, "Error: " + e.getMessage());
+            updateStatus(resume, ResumeStatus.FAILED, "Error: " + e.getMessage());
         }
     }
 
     @Override
-    public void updateStatus(Resume resume, ApplicationStatus status, String comment) {
+    public void updateStatus(Resume resume, ResumeStatus status, String comment) {
         resume.setStatus(status);
         resumeRepository.save(resume);
 

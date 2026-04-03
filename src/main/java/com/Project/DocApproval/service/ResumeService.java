@@ -1,6 +1,6 @@
 package com.Project.DocApproval.service;
 
-import com.Project.DocApproval.enums.ApplicationStatus;
+import com.Project.DocApproval.enums.ResumeStatus;
 import com.Project.DocApproval.model.Resume;
 import jakarta.transaction.Transactional;
 import org.springframework.scheduling.annotation.Async;
@@ -17,5 +17,5 @@ public interface ResumeService {
     @Transactional
     void processResume(UUID resumeId);
 
-    void updateStatus(Resume resume, ApplicationStatus status, String comment);
+    void updateStatus(Resume resume, ResumeStatus status, String comment);
 }

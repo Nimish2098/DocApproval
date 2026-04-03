@@ -1,6 +1,6 @@
 package com.Project.DocApproval.model;
 
-import com.Project.DocApproval.enums.ApplicationStatus;
+import com.Project.DocApproval.enums.ResumeStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,7 +24,7 @@ public class Resume {
     private String filePath;
 
     @Enumerated(EnumType.STRING)
-    private ApplicationStatus status;
+    private ResumeStatus status;
 
     private Double matchScore;
 

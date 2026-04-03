@@ -1,6 +1,6 @@
 package com.Project.DocApproval.model;
 
-import com.Project.DocApproval.enums.ApplicationStatus;
+import com.Project.DocApproval.enums.ResumeStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,7 +21,7 @@ public class ResumeStatusHistory {
     private Resume resume;
 
     @Enumerated(EnumType.STRING)
-    private ApplicationStatus status;
+    private ResumeStatus status;
     private String StatusComment;
 
     private LocalDateTime localDateTime;

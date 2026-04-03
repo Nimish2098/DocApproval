@@ -1,6 +1,6 @@
 package com.Project.DocApproval.service.impl;
 
-import com.Project.DocApproval.enums.ApplicationStatus;
+import com.Project.DocApproval.enums.ResumeStatus;
 import com.Project.DocApproval.exceptions.DuplicateApplicationException;
 import com.Project.DocApproval.model.Application;
 import com.Project.DocApproval.repository.ApplicationTrackerRepository;
@@ -30,16 +30,16 @@ public class ApplicationTrackerServiceImpl implements ApplicationTrackerService 
 
 
        savedApplication.setUrl(application.getUrl());
-       savedApplication.setApplicationStatus(application.getApplicationStatus());
+       savedApplication.setResumeStatus(application.getResumeStatus());
        savedApplication.setPosition(application.getPosition());
        savedApplication.setCompany(application.getCompany());
     }
 
-    public void updateApplicationStatus(UUID id, ApplicationStatus status){
+    public void updateApplicationStatus(UUID id, ResumeStatus status){
         Application savedApplication = trackerRepository.findById(id)
                 .orElseThrow(()-> new RuntimeException("Application Not Found"));
 
-        savedApplication.setApplicationStatus(status);
+        savedApplication.setResumeStatus(status);
     }
     public void partialUpdateApplication(UUID id, Map<String, Object>map){
         Application savedApplication = trackerRepository.findById(id)
@@ -50,7 +50,7 @@ public class ApplicationTrackerServiceImpl implements ApplicationTrackerService 
             if(key=="url") savedApplication.setUrl((String)value);
             else if(key=="company") savedApplication.setCompany((String)value);
             else if(key=="position") savedApplication.setPosition((String)value);
-            else if(key=="status") savedApplication.setApplicationStatus((ApplicationStatus) value);
+            else if(key=="status") savedApplication.setResumeStatus((ResumeStatus) value);
         });
 
     }

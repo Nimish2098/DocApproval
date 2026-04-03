@@ -1,6 +1,6 @@
 package com.Project.DocApproval.model;
 
-import com.Project.DocApproval.enums.ApplicationStatus;
+import com.Project.DocApproval.enums.ResumeStatus;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Data;
@@ -24,7 +24,7 @@ public class Application {
     private String position;
     private String company;
 
-    private ApplicationStatus applicationStatus;
+    private ResumeStatus resumeStatus;
 
     private LocalDateTime localDateTime;
     private String url;

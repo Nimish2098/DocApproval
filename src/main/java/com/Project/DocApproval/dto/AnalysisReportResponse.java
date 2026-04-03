@@ -1,6 +1,6 @@
 package com.Project.DocApproval.dto;
 
-import com.Project.DocApproval.enums.ApplicationStatus;
+import com.Project.DocApproval.enums.ResumeStatus;
 
 import java.util.List;
 import java.util.UUID;
@@ -8,7 +8,7 @@ import java.util.UUID;
 public record AnalysisReportResponse(
         UUID id,
         String candidateName,
-        ApplicationStatus status,
+        ResumeStatus status,
         Double matchScore,
         List<String> missingSkills,
         String feedback
