@@ -1,6 +1,6 @@
 package com.Project.DocApproval.model;
 
-import com.Project.DocApproval.enums.ResumeStatus;
+import com.Project.DocApproval.enums.ApplicationStatus;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Data;
@@ -20,11 +20,13 @@ public class Application {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(updatable = false, nullable = false)
     private UUID uuid;
     private String position;
     private String company;
 
-    private ResumeStatus resumeStatus;
+    @Enumerated(EnumType.STRING)
+    private ApplicationStatus applicationStatus;
 
     private LocalDateTime localDateTime;
     private String url;
