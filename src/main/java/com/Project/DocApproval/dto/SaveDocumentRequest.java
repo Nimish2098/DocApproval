@@ -8,6 +8,6 @@ public class SaveDocumentRequest {
     @NotBlank(message = "Title is required")
     private String title;
 
-    @NotBlank(message = "Document content is required")
+    @NotBlank(message = "Content is required")
     private String content;
 }

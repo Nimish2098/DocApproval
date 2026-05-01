@@ -1,6 +1,5 @@
 package com.Project.DocApproval.dto;
 
-
 import lombok.Data;
 
 @Data

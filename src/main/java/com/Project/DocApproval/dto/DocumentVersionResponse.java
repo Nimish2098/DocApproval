@@ -2,6 +2,7 @@ package com.Project.DocApproval.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -9,9 +10,8 @@ import java.util.UUID;
 @AllArgsConstructor
 public class DocumentVersionResponse {
     private UUID id;
-    private String commitHash;
-    private String commitMessage;
-    private String contentSnapshot;
-    private String authorName;
+    private UUID documentId;
+    private String message;
+    private String content;
     private LocalDateTime createdAt;
 }

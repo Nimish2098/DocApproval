@@ -1,10 +1,16 @@
 package com.Project.DocApproval.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
 public class ChangePasswordRequest {
-    private String currentPassword;   // verify old password first
+    @NotBlank(message = "Current password is required")
+    private String currentPassword;
+
+    @NotBlank(message = "New password is required")
     private String newPassword;
-    private String confirmPassword;   // must match newPassword
+
+    @NotBlank(message = "Confirm password is required")
+    private String confirmPassword;
 }
