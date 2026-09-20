@@ -36,4 +36,3 @@ uploads
 *.env
 *.logs
 application-local.yml
-
