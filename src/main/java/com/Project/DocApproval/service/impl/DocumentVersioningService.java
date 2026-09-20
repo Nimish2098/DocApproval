@@ -32,18 +32,12 @@ public class DocumentVersioningService {
         User user = getUser(userDetails);
         Document doc = getOwnedDoc(documentId, user);
 
-        String snapshot = request.getContent() != null ? request.getContent() : doc.getContent();
-        
-        // auto-save doc content if diff
-        if(request.getContent() != null && !request.getContent().equals(doc.getContent())){
-            doc.setContent(request.getContent());
-            documentRepository.save(doc);
-        }
+        String snapshot = doc.getContent();
 
         DocumentVersion version = DocumentVersion.builder()
                 .document(doc)
                 .commitHash(UUID.randomUUID().toString().substring(0, 8))
-                .commitMessage(request.getCommitMessage())
+                .commitMessage(request.getMessage())
                 .contentSnapshot(snapshot)
                 .author(user)
                 .build();
@@ -58,8 +52,7 @@ public class DocumentVersioningService {
         return versionRepository.findByDocumentOrderByCreatedAtDesc(doc)
                 .stream()
                 .map(v -> new DocumentVersionSummary(
-                        v.getId(), v.getCommitHash(), v.getCommitMessage(),
-                        v.getAuthor().getName(), v.getCreatedAt()))
+                    v.getId(), v.getCommitMessage(), v.getCreatedAt()))
                 .toList();
     }
 
@@ -122,7 +115,7 @@ public class DocumentVersioningService {
 
     private DocumentVersionResponse toResponse(DocumentVersion version) {
         return new DocumentVersionResponse(
-                version.getId(), version.getCommitHash(), version.getCommitMessage(),
-                version.getContentSnapshot(), version.getAuthor().getName(), version.getCreatedAt());
+            version.getId(), version.getDocument().getId(), version.getCommitMessage(),
+            version.getContentSnapshot(), version.getCreatedAt());
     }
 }

@@ -1,42 +1,84 @@
 package com.Project.DocApproval.service.impl;
 
 import com.Project.DocApproval.model.AnalysisResult;
+import com.Project.DocApproval.service.AnalysisService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 import java.util.*;
 
 @Service
-public class AnalysisServiceImpl implements com.Project.DocApproval.service.AnalysisService {
+public class AnalysisServiceImpl implements AnalysisService {
 
-    @Override
-    public AnalysisResult performAnalysis(String extractedResumeText, Set<String> requiredSkills) {
-        // 1. Safety Check: If Tika returned nothing or JD has no keywords, score is 0
-        if (extractedResumeText == null || extractedResumeText.isBlank() || requiredSkills == null || requiredSkills.isEmpty()) {
-            return new AnalysisResult(0.0, new ArrayList<>(requiredSkills != null ? requiredSkills : Collections.emptySet()), "Could not perform analysis: missing data.");
-        }
+    private final WebClient webClient;
+    private final ObjectMapper mapper;
+    private final String apiKey;
 
-        String content = extractedResumeText.toLowerCase();
-        List<String> missingSkills = new ArrayList<>();
-        int matchedCount = 0;
-
-        // 2. The Core Comparison Logic
-        for (String skill : requiredSkills) {
-            // Check if the JD keyword exists anywhere in the resume text
-            if (content.contains(skill.toLowerCase())) {
-                matchedCount++;
-            } else {
-                missingSkills.add(skill);
-            }
-        }
-
-        // 3. Calculate match percentage
-        double score = ((double) matchedCount / requiredSkills.size()) * 100;
-
-        String feedback = generateFeedback(score, missingSkills);
-
-        // 4. Return the record with names matching your ResumeServiceImpl calls
-        return new AnalysisResult(score, missingSkills, feedback);
+    public AnalysisServiceImpl(
+            WebClient.Builder webClientBuilder,
+            ObjectMapper mapper,
+            @Value("${openai.api-key:}") String apiKey) {
+        this.webClient = webClientBuilder.baseUrl("https://api.openai.com/v1").build();
+        this.mapper = mapper;
+        this.apiKey = apiKey;
     }
 
+    @Override
+    public AnalysisResult performAnalysis(String extractedResumeText, String jobDescriptionText) {
+        if (extractedResumeText == null || extractedResumeText.isBlank() || jobDescriptionText == null || jobDescriptionText.isBlank()) {
+            return new AnalysisResult(0.0, new ArrayList<>(), "Could not perform analysis: missing data.");
+        }
+
+        try {
+            if (apiKey.isBlank()) {
+                return new AnalysisResult(0.0, new ArrayList<>(),
+                        "Analysis unavailable: OPENAI_API_KEY is not configured.");
+            }
+
+            String prompt = "You are a resume screening assistant. Evaluate the following resume against the job description "
+                    + "using these criteria: (1) Relevant technical skills match, (2) Experience level fit, "
+                    + "(3) Project/work relevance, (4) Education relevance, (5) Resume clarity/completeness.\n\n"
+                    + "For each criterion, give a score 0-10 and a one-line reason. Also give an overall matchScore (0-100) "
+                    + "and a list of missing/weak areas.\n\n"
+                    + "Resume: \"" + extractedResumeText + "\"\n"
+                    + "Job Description: \"" + jobDescriptionText + "\"\n\n"
+                    + "Return ONLY valid JSON in this exact format: "
+                    + "{\"criteria\": [{\"name\": \"...\", \"score\": <0-10>, \"reason\": \"...\"}], "
+                    + "\"matchScore\": <0-100>, \"missingAreas\": [\"...\"], \"feedback\": \"<one sentence overall verdict>\"}";
+
+            Map<String, Object> body = Map.of(
+                    "model", "gpt-4o-mini",
+                    "messages", List.of(Map.of("role", "user", "content", prompt))
+            );
+
+            String response = webClient.post()
+                    .uri("/chat/completions")
+                    .header("Authorization", "Bearer " + apiKey)
+                    .bodyValue(body)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+
+            JsonNode root = mapper.readTree(response);
+            String content = root.path("choices").get(0).path("message").path("content").asText();
+            JsonNode result = mapper.readTree(content);
+
+            double score = result.path("matchScore").asDouble();
+            List<String> missing = new ArrayList<>();
+            result.path("missingAreas").forEach(n -> missing.add(n.asText()));
+            String feedback = result.path("feedback").asText();
+
+            // optionally also store the per-criterion breakdown (result.path("criteria"))
+            // in a new field/table if you want to show it in the API response
+
+            return new AnalysisResult(score, missing, feedback);
+
+        } catch (Exception e) {
+            return new AnalysisResult(0.0, new ArrayList<>(), "Analysis failed: " + e.getMessage());
+        }
+    }
     @Override
     public String generateFeedback(double score, List<String> missing) {
         if (score < 40) return "Profile Mismatch. Missing key skills: " + String.join(", ", missing);

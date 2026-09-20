@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 public interface AnalysisService {
-    AnalysisResult performAnalysis(String extractedResumeText, Set<String> requiredSkills);
+    AnalysisResult performAnalysis(String extractedResumeText, String jobDescriptionText);
 
     String generateFeedback(double score, List<String> missing);
 }
