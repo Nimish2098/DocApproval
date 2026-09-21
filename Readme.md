@@ -80,9 +80,9 @@ src/main/java/com/Project/DocApproval/
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | POST | `/api/v1/auth/register` | Public | Register a new user |
-| POST | `/api/v1/auth/login` | Public | Login and receive tokens |
-| POST | `/api/v1/auth/refresh-token` | Public | Get new access token |
-| POST | `/api/v1/auth/logout` | Bearer Token | Invalidate refresh token |
+| POST | `/api/v1/auth/login` | Public | Login and receive an access token plus HttpOnly refresh cookie |
+| POST | `/api/v1/auth/refresh-token` | Refresh cookie | Get a new access token |
+| POST | `/api/v1/auth/logout` | Refresh cookie or Bearer Token | Invalidate refresh token and clear cookie |
 
 ### User — `/user`
 
@@ -146,7 +146,24 @@ SPRING_DATASOURCE_PASSWORD
 JWT_SECRET
 JWT_EXPIRATION
 JWT_REFRESH_EXPIRATION
+CORS_ALLOWED_ORIGINS
+JWT_REFRESH_COOKIE_SECURE
+JWT_REFRESH_COOKIE_SAME_SITE
+JWT_REFRESH_COOKIE_DOMAIN
 ```
+
+The SPA must send `credentials: "include"` (or Axios `withCredentials: true`) to
+`/api/v1/auth/refresh-token` and `/api/v1/auth/logout`. Login and registration return
+only the short-lived `accessToken`; the refresh token is never included in JSON or
+JavaScript-accessible storage. In production, set `JWT_REFRESH_COOKIE_SECURE=true`,
+use `JWT_REFRESH_COOKIE_SAME_SITE=Strict` or `Lax` where possible, and configure an
+exact production origin in `CORS_ALLOWED_ORIGINS`.
+
+Flyway runs the database migration automatically on startup. The ownership migration
+normalizes the legacy application table name, adds `user_id`, and assigns existing
+applications without an owner to the first registered user. If legacy applications
+exist but the `users` table is empty, startup stops rather than assigning ownership
+silently; create the original user first, then restart the application.
 
 ### 4. Run the application
 
@@ -162,14 +179,14 @@ App starts at `http://localhost:8080`
 
 ```
 Register or Login
-  → receive accessToken + refreshToken
+  → receive accessToken + HttpOnly refresh cookie
 
 Use accessToken on every request:
   Authorization: Bearer <accessToken>
 
 When accessToken expires:
   POST /api/v1/auth/refresh-token
-  → receive new accessToken
+  → send refresh cookie, receive new accessToken
 
 On logout:
   POST /api/v1/auth/logout
