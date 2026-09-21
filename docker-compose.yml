@@ -26,6 +26,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION}
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
     depends_on:
       db:
         condition: service_healthy
