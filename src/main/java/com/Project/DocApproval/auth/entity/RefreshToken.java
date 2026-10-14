@@ -33,6 +33,6 @@ public class RefreshToken {
     private User user;
 
     public boolean isExpired() {
-        return Instant.now().isAfter(expiryDate);
+        return !Instant.now().isBefore(expiryDate);
     }
 }

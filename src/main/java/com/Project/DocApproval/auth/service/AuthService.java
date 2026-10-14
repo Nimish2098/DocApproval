@@ -9,11 +9,16 @@ import com.Project.DocApproval.user.entity.User;
 import com.Project.DocApproval.user.repository.UserRepository;
 import com.Project.DocApproval.auth.security.JwtService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.Locale;
+import java.util.UUID;
 
 // com/yourpackage/service/AuthService.java
 @Service
@@ -26,18 +31,19 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final RefreshTokenService refreshTokenService;  // ← inject
 
-        public String getRefreshTokenForUser(java.util.UUID userId) {
-                return refreshTokenService.getTokenForUser(userId);
-        }
+    public String getRefreshTokenForUser(UUID userId) {
+        return refreshTokenService.getTokenForUser(userId);
+    }
 
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered");
+        String email = normalizeEmail(request.getEmail());
+        if (userRepository.existsByEmailIgnoreCase(email)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already registered");
         }
 
         User user = User.builder()
-                .name(request.getName())
-                .email(request.getEmail())
+                .name(request.getName().trim())
+                .email(email)
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.USER)
                 .build();
@@ -55,12 +61,13 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
+        String email = normalizeEmail(request.getEmail());
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+                new UsernamePasswordAuthenticationToken(email, request.getPassword())
         );
 
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
 
         String accessToken = jwtService.generateToken(user);
         refreshTokenService.createRefreshToken(user.getId());
@@ -73,10 +80,9 @@ public class AuthService {
         );
     }
 
-    // ── New: refresh access token ─────────────────────────────────────
-        public AuthResponse refreshToken(String token) {
-                RefreshToken refreshToken = refreshTokenService.findByToken(token);
-        refreshTokenService.verifyExpiration(refreshToken);  // throws if expired
+    public AuthResponse refreshToken(String token) {
+        RefreshToken refreshToken = refreshTokenService.findByToken(token);
+        refreshTokenService.verifyExpiration(refreshToken);
 
         User user = refreshToken.getUser();
         String newAccessToken = jwtService.generateToken(user);
@@ -89,14 +95,17 @@ public class AuthService {
         );
     }
 
-    // ── New: logout ───────────────────────────────────────────────────
     public void logout(UserDetails userDetails) {
-        User user = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        refreshTokenService.deleteByUser(user);  // invalidate refresh token
+        User user = userRepository.findByEmailIgnoreCase(userDetails.getUsername())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        refreshTokenService.deleteByUser(user);
     }
 
-        public void logoutByRefreshToken(String token) {
-                refreshTokenService.deleteByToken(token);
-        }
+    public void logoutByRefreshToken(String token) {
+        refreshTokenService.deleteByToken(token);
+    }
+
+    private String normalizeEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
+    }
 }

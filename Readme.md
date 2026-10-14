@@ -116,7 +116,31 @@ src/main/java/com/Project/DocApproval/
 
 ## Getting Started
 
-### Prerequisites
+### Quick local demo with Docker Compose
+
+Requires Docker Compose and an OpenAI API key. Copy `.env.example` to `.env`, replace
+the database password and OpenAI key, and set `JWT_SECRET` to a newly generated
+Base64-encoded random secret of at least 32 bytes. For example, in PowerShell:
+
+```powershell
+[Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+```
+
+Start PostgreSQL and the API:
+
+```powershell
+docker compose up --build
+```
+
+The API is available at `http://localhost:8080` and Swagger UI at
+`http://localhost:8080/swagger-ui/index.html`. Use the public register endpoint to
+create a `USER`, then send the returned `accessToken` as a bearer token to
+`GET /user/profile`. The refresh token is held in an HttpOnly cookie; browser clients
+must send credentials on refresh and logout.
+
+### Run directly with Java
+
+Requires Java 21, Maven, and PostgreSQL.
 
 - Java 21
 - Maven
@@ -165,13 +189,15 @@ applications without an owner to the first registered user. If legacy applicatio
 exist but the `users` table is empty, startup stops rather than assigning ownership
 silently; create the original user first, then restart the application.
 
-### 4. Run the application
+Run the application
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-App starts at `http://localhost:8080`
+Set `DATABASE_URL` (or `JDBC_DATABASE_URL` on Heroku) to a JDBC PostgreSQL URL, plus `DATABASE_USERNAME`,
+`DATABASE_PASSWORD`, `JWT_SECRET`, and `OPENAI_API_KEY` in the environment. The app
+starts at `http://localhost:8080`.
 
 ---
 

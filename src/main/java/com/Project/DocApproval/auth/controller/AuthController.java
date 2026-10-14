@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -52,17 +53,17 @@ public class AuthController {
         @ApiResponse(responseCode = "400", description = "Invalid input or email already exists")
     })
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         return withRefreshCookie(authService.register(request));
     }
 
-    @Operation(summary = "Login User", description = "Authenticates a user and returns access and refresh JWT tokens.")
+    @Operation(summary = "Login User", description = "Authenticates a user and returns an access token with an HttpOnly refresh cookie.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Successfully authenticated"),
         @ApiResponse(responseCode = "401", description = "Invalid email or password")
     })
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return withRefreshCookie(authService.login(request));
     }
 
