@@ -228,3 +228,55 @@ https://docapproval-api-fb4963d3a934.herokuapp.com/swagger-ui/index.html
 ## License
 
 This project is built for educational purposes as a Personal project.
+
+resume-analyzer/                     (one repo, two apps)
+├── backend/
+│   ├── pom.xml
+│   └── src/
+│       ├── main/
+│       │   ├── java/com/Project/DocApproval/
+│       │   │   ├── DocApprovalApplication.java
+│       │   │   │
+│       │   │   ├── common/                      shared by all features
+│       │   │   │   ├── config/                  CORS, Spring Security (permitAll for now), ChatClient config
+│       │   │   │   ├── web/                     GlobalExceptionHandler, ApiError
+│       │   │   │   ├── actor/                   CurrentActor + resolver (clientId now, JWT later)
+│       │   │   │   └── ratelimit/               rate-limit filter/interceptor (Bucket4j)
+│       │   │   │
+│       │   │   ├── analysis/
+│       │   │   │   ├── web/                     ResumeAnalysisController
+│       │   │   │   ├── service/                 ResumeAnalysisService (step 4: merge + validate + total score)
+│       │   │   │   │                            ResumeTextExtractor (Tika, text + page count)
+│       │   │   │   ├── check/                   Phase 3, all the code checks
+│       │   │   │   │                            ResumeDocument, ResumeCheck, CheckResult, CheckSupport,
+│       │   │   │   │                            TextUtils, ResumeSections, TechTerms,
+│       │   │   │   │                            StructureAtsCheck, ContactCheck, ProjectsCheck,
+│       │   │   │   │                            SkillsCheck, WritingCheck, CodeCheckRunner
+│       │   │   │   ├── ai/                      Phase 4
+│       │   │   │   │                            ResumePrompts, ResumeAiAnalyzer
+│       │   │   │   ├── dto/                     AnalysisParameter, ParameterScore, Issue, Severity,
+│       │   │   │   │                            IssueSource, Impact, MissingMaterial, ActionPlanStep,
+│       │   │   │   │                            AiAssessment, ResumeReport, ScoreLabel
+│       │   │   │   ├── entity/                  ResumeAnalysis (clientId, userId, overallScore,
+│       │   │   │   │                            scoreLabel, report jsonb, createdAt)
+│       │   │   │   ├── repository/              ResumeAnalysisRepository
+│       │   │   │   └── cleanup/                 scheduled job: delete guest analyses after 30 days
+│       │   │   │
+│       │   │   ├── auth/                        LATER: signup/login, JWT, claim guest data
+│       │   │   └── tracker/ calendar/ materials/   LATER: all under /api/v1/me/**
+│       │   │
+│       │   └── resources/
+│       │       ├── application.properties
+│       │       └── db/migration/                Flyway: V1__create_resume_analysis.sql, ...
+│       │
+│       └── test/java/com/Project/DocApproval/analysis/
+│           ├── check/                           SampleResumes + one test per check
+│           └── ai/                              ResumeAiAnalyzerTest
+│
+└── frontend/                                    React app
+└── src/
+├── api/                                 fetch wrapper that adds X-Client-Id
+├── lib/clientId.js                      generates and stores the UUID in localStorage
+├── pages/                               Home/Upload, Report, History
+├── components/                          ScoreCard, IssueList, ActionPlan, UploadBox
+└── App.jsx

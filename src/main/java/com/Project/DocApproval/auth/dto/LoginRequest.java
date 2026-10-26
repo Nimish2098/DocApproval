@@ -1,15 +1,16 @@
+
 package com.Project.DocApproval.auth.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
 
-@Data
-public class LoginRequest {
-    @Email(message = "Invalid email format")
+public record LoginRequest(
+
     @NotBlank(message = "Email is required")
-    private String email;
+    @Email(message = "Enter a valid email address")
+    String email,
 
     @NotBlank(message = "Password is required")
-    private String password;
-}
+    String password
+
+) {}

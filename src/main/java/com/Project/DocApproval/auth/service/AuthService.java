@@ -1,111 +1,105 @@
+
 package com.Project.DocApproval.auth.service;
 
 import com.Project.DocApproval.auth.dto.AuthResponse;
 import com.Project.DocApproval.auth.dto.LoginRequest;
 import com.Project.DocApproval.auth.dto.RegisterRequest;
-import com.Project.DocApproval.user.enums.Role;
-import com.Project.DocApproval.auth.entity.RefreshToken;
-import com.Project.DocApproval.user.entity.User;
-import com.Project.DocApproval.user.repository.UserRepository;
+import com.Project.DocApproval.auth.entity.AppUser;
+import com.Project.DocApproval.auth.repository.AppUserRepository;
 import com.Project.DocApproval.auth.security.JwtService;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Locale;
-import java.util.UUID;
-
-// com/yourpackage/service/AuthService.java
 @Service
-@RequiredArgsConstructor
 public class AuthService {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
-    private final AuthenticationManager authenticationManager;
-    private final RefreshTokenService refreshTokenService;  // ← inject
+  private final AppUserRepository userRepository;
+  private final PasswordEncoder passwordEncoder;
+  private final AuthenticationManager authenticationManager;
+  private final UserDetailsService userDetailsService;
+  private final JwtService jwtService;
 
-    public String getRefreshTokenForUser(UUID userId) {
-        return refreshTokenService.getTokenForUser(userId);
+  public AuthService(
+      AppUserRepository userRepository,
+      PasswordEncoder passwordEncoder,
+      AuthenticationManager authenticationManager,
+      UserDetailsService userDetailsService,
+      JwtService jwtService) {
+    this.userRepository = userRepository;
+    this.passwordEncoder = passwordEncoder;
+    this.authenticationManager = authenticationManager;
+    this.userDetailsService = userDetailsService;
+    this.jwtService = jwtService;
+  }
+
+  @Transactional
+  public AuthResponse register(RegisterRequest request) {
+
+    String email = request.email().trim().toLowerCase();
+
+    if (userRepository.existsByEmailIgnoreCase(email)) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT,
+          "Email is already registered"
+      );
     }
 
-    public AuthResponse register(RegisterRequest request) {
-        String email = normalizeEmail(request.getEmail());
-        if (userRepository.existsByEmailIgnoreCase(email)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already registered");
-        }
+    AppUser user = new AppUser(
+        request.name().trim(),
+        email,
+        passwordEncoder.encode(request.password())
+    );
 
-        User user = User.builder()
-                .name(request.getName().trim())
-                .email(email)
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.USER)
-                .build();
+    user = userRepository.saveAndFlush(user);
 
-        User saved = userRepository.save(user);
-        String accessToken = jwtService.generateToken(saved);
-        refreshTokenService.createRefreshToken(saved.getId());
+    UserDetails userDetails =
+        userDetailsService.loadUserByUsername(user.getEmail());
 
-        return new AuthResponse(
-                accessToken,
-                saved.getId(),
-                saved.getName(),
-                saved.getEmail()
-        );
-    }
+    String token = jwtService.generateToken(userDetails);
 
-    public AuthResponse login(LoginRequest request) {
-        String email = normalizeEmail(request.getEmail());
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(email, request.getPassword())
-        );
+    return new AuthResponse(
+        token,
+        "Bearer",
+        user.getId(),
+        user.getName(),
+        user.getEmail()
+    );
+  }
 
-        User user = userRepository.findByEmailIgnoreCase(email)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
+  public AuthResponse login(LoginRequest request) {
 
-        String accessToken = jwtService.generateToken(user);
-        refreshTokenService.createRefreshToken(user.getId());
+    String email = request.email().trim().toLowerCase();
 
-        return new AuthResponse(
-                accessToken,
-                user.getId(),
-                user.getName(),
-                user.getEmail()
-        );
-    }
+    authenticationManager.authenticate(
+        new UsernamePasswordAuthenticationToken(
+            email,
+            request.password()
+        )
+    );
 
-    public AuthResponse refreshToken(String token) {
-        RefreshToken refreshToken = refreshTokenService.findByToken(token);
-        refreshTokenService.verifyExpiration(refreshToken);
+    UserDetails userDetails =
+        userDetailsService.loadUserByUsername(email);
 
-        User user = refreshToken.getUser();
-        String newAccessToken = jwtService.generateToken(user);
+    AppUser user = userRepository
+        .findByEmailIgnoreCase(email)
+        .orElseThrow();
 
-        return new AuthResponse(
-                newAccessToken,
-                user.getId(),
-                user.getName(),
-                user.getEmail()
-        );
-    }
+    String token = jwtService.generateToken(userDetails);
 
-    public void logout(UserDetails userDetails) {
-        User user = userRepository.findByEmailIgnoreCase(userDetails.getUsername())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        refreshTokenService.deleteByUser(user);
-    }
-
-    public void logoutByRefreshToken(String token) {
-        refreshTokenService.deleteByToken(token);
-    }
-
-    private String normalizeEmail(String email) {
-        return email.trim().toLowerCase(Locale.ROOT);
-    }
+    return new AuthResponse(
+        token,
+        "Bearer",
+        user.getId(),
+        user.getName(),
+        user.getEmail()
+    );
+  }
 }

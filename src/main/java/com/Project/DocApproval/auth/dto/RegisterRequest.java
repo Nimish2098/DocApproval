@@ -1,18 +1,27 @@
 package com.Project.DocApproval.auth.dto;
 
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
+import jakarta.validation.constraints.Size;
 
-@Data
-public class RegisterRequest {
+public record RegisterRequest(
+
     @NotBlank(message = "Name is required")
-    private String name;
+    @Size(max = 100, message = "Name cannot exceed 100 characters")
+    String name,
 
-    @Email(message = "Invalid email format")
     @NotBlank(message = "Email is required")
-    private String email;
+    @Email(message = "Enter a valid email address")
+    @Size(max = 255)
+    String email,
 
     @NotBlank(message = "Password is required")
-    private String password;
-}
+    @Size(
+        min = 8,
+        max = 72,
+        message = "Password must contain 8 to 72 characters"
+    )
+    String password
+
+) {}
